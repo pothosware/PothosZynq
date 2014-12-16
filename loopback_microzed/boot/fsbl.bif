@@ -1,0 +1,6 @@
+the_ROM_image:
+{
+	[bootloader]./fsbl.elf
+	./design_1_wrapper.bit
+	./u-boot.elf
+}
