@@ -1,0 +1,9 @@
+# Vivado/PlanAhead
+#*.xpr
+*.ppr
+*.cache/
+*.runs/
+*.sdk/
+*.jou
+*.log
+*.out
