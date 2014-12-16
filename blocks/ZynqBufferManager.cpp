@@ -3,7 +3,6 @@
 
 #include "ZynqDMASupport.hpp"
 #include <Pothos/Util/OrderedQueue.hpp>
-#include "pothos_zynq_dma_user_driver.h"
 #include <memory>
 #include <iostream>
 

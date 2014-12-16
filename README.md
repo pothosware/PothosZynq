@@ -9,8 +9,9 @@ The Pothos Zynq support package provides:
 ## Layout
 
 * kernel/ - the Pothos AXI DMA support linux kernel module
+* driver/ - the Pothos AXI DMA userspace driver with C API
 * blocks/ - Pothos framework DMA source and sink blocks
-* loopback/ - example Vivado loopback project and boot files
+* loopback_microzed/ - example Vivado loopback project and boot files
 
 ## Dependencies
 

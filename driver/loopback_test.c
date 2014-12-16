@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: BSL-1.0
 
 #include <stdio.h>
-#include "pothos_zynq_dma_user_driver.h"
+#include "pothos_zynq_dma_driver.h"
 
 int test(const int index)
 {
@@ -128,6 +128,5 @@ int test(const int index)
 int main(int argc, const char* argv[])
 {
     if (test(0) != 0) return EXIT_FAILURE;
-    if (test(1) != 0) return EXIT_FAILURE;
     return EXIT_SUCCESS;
 }

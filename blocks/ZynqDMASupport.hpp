@@ -3,7 +3,7 @@
 
 #pragma once
 #include <Pothos/Framework.hpp>
-#include "pothos_zynq_dma_user_driver.h"
+#include "pothos_zynq_dma_driver.h"
 #include <memory>
 
 //! Factory for Zynq DMA buffer manager

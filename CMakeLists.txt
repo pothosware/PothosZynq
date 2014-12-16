@@ -12,6 +12,7 @@ find_package(Pothos CONFIG REQUIRED)
 ## Build module for Zynq DMA blocks
 ########################################################################
 include_directories(${PROJECT_SOURCE_DIR}/kernel)
+include_directories(${PROJECT_SOURCE_DIR}/driver)
 include_directories(${PROJECT_SOURCE_DIR}/blocks)
 
 set(SOURCES
