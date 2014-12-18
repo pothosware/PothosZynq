@@ -30,7 +30,9 @@ struct pzdud;
 typedef struct pzdud pzdud_t;
 
 /*!
- * Create a user DMA instance.
+ * Create a new user DMA instance.
+ * The instance represents a single DMA channel
+ * given the engine index and the channel direction.
  * \param engine_no the index of an AXI DMA in the device tree
  * \param direction the direction to/from stream
  * \return the user dma instance structure or NULL on error
@@ -46,6 +48,10 @@ static inline int pzdud_destroy(pzdud_t *self);
 
 /*!
  * Reset the DMA engine.
+ * Although S2MM and MM2s channels are independent,
+ * this call resets the entire engine, both channels,
+ * regardless of the channel direction for this instance.
+ * Use with caution as this could halt another instance.
  * \param self the user dma instance structure
  * \return the error code or 0 for success
  */
