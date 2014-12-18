@@ -77,6 +77,7 @@ static void pothos_zynq_dma_engine_init(pothos_zynq_dma_engine_t *engine, struct
     engine->regs_phys_addr = res->start;
     engine->regs_phys_size = resource_size(res)/2; //we choose to map lower half
     engine->regs_virt_addr = ioremap_nocache(engine->regs_phys_addr, engine->regs_phys_size);
+    dev_info(&pdev->dev, "Registers at 0x%x\n", engine->regs_phys_addr);
 
     //clear the channels
     pothos_zynq_dma_chan_clear(&engine->mm2s_chan);
@@ -90,7 +91,9 @@ static void pothos_zynq_dma_engine_init(pothos_zynq_dma_engine_t *engine, struct
 
     //determine interrupt numbers
     engine->mm2s_chan.irq_number = irq_of_parse_and_map(node, 0);
+    dev_info(&pdev->dev, "MM2S IRQ = %d\n", engine->mm2s_chan.irq_number);
     engine->s2mm_chan.irq_number = irq_of_parse_and_map(node, 1);
+    dev_info(&pdev->dev, "S2MM IRQ = %d\n", engine->s2mm_chan.irq_number);
 
     //register interrupt handlers
     pothos_zynq_dma_chan_register_irq(pdev, &engine->mm2s_chan);

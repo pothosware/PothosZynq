@@ -59,16 +59,6 @@ typedef struct
 } pothos_zynq_dma_alloc_t;
 
 /*!
- * The IOCTL structured used to free allocations.
- */
-typedef struct
-{
-    unsigned int sentinel; //!< A expected word for ABI compatibility checks
-    size_t chan_index; //!< Channel index specifies the DMA engine number
-    size_t chan_dir; //!< Channel directions specifies MM2S or S2MM
-} pothos_zynq_dma_free_t;
-
-/*!
  * The IOCTL structured used for wait completions (direction-independent).
  * The index should indicate the head entry in a scatter/gather table.
  */
@@ -81,13 +71,13 @@ typedef struct
 
 
 //! Setup the DMA channel for the open file descriptor
-#define POTHOS_ZYNQ_DMA_SETUP _IOWR('p', 1, pothos_zynq_dma_setup_t *)
+#define POTHOS_ZYNQ_DMA_SETUP _IOW('p', 1, pothos_zynq_dma_setup_t *)
 
 //! Allocate DMA buffers and the scatter/gather table
 #define POTHOS_ZYNQ_DMA_ALLOC _IOWR('p', 2, pothos_zynq_dma_alloc_t *)
 
 //! Free all allocations performed by POTHOS_ZYNQ_DMA_ALLOC
-#define POTHOS_ZYNQ_DMA_FREE _IOW('p', 3, pothos_zynq_dma_free_t *)
+#define POTHOS_ZYNQ_DMA_FREE _IO('p', 3)
 
 //! Wait with a timeout for a scatter/gather entry to complete
 #define POTHOS_ZYNQ_DMA_WAIT _IOW('p', 4, pothos_zynq_dma_wait_t *)

@@ -14,9 +14,14 @@ long pothos_zynq_dma_ioctl_chan(pothos_zynq_dma_user_t *user, const pothos_zynq_
     pothos_zynq_dma_setup_t setup_args;
     if (copy_from_user(&setup_args, user_config, sizeof(pothos_zynq_dma_setup_t)) != 0) return -EACCES;
 
+    //check the sentinel
+    if (setup_args.sentinel != POTHOS_ZYNQ_DMA_SENTINEL) return -EINVAL;
+
+    //set the engine pointer
     if (setup_args.engine_no >= user->module->num_engines) return -EINVAL;
     user->engine = user->module->engines + setup_args.engine_no;
 
+    //set the channel pointer
     if (setup_args.direction == POTHOS_ZYNQ_DMA_MM2S) user->chan = &user->engine->mm2s_chan;
     else if (setup_args.direction == POTHOS_ZYNQ_DMA_S2MM) user->chan = &user->engine->s2mm_chan;
     else return -EINVAL;
@@ -40,7 +45,7 @@ long pothos_zynq_dma_ioctl(struct file *filp, unsigned int cmd, unsigned long ar
     switch (cmd)
     {
     case POTHOS_ZYNQ_DMA_ALLOC: return pothos_zynq_dma_ioctl_alloc(user, (pothos_zynq_dma_alloc_t *)arg);
-    case POTHOS_ZYNQ_DMA_FREE: return pothos_zynq_dma_ioctl_free(user, (pothos_zynq_dma_free_t *)arg);
+    case POTHOS_ZYNQ_DMA_FREE: return pothos_zynq_dma_ioctl_free(user);
     case POTHOS_ZYNQ_DMA_WAIT: return pothos_zynq_dma_ioctl_wait(user, (pothos_zynq_dma_wait_t *)arg);
     }
 
@@ -55,8 +60,8 @@ int pothos_zynq_dma_mmap(struct file *filp, struct vm_area_struct *vma)
     vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
 
     //The user passes in the physical address as the offset:
-    #define try_map_buff(__b) if (offset == (__b).paddr) \
-        return remap_pfn_range(vma, vma->vm_start, ((__b).paddr) >> PAGE_SHIFT, size, vma->vm_page_prot);
+    #define try_map_buff(__b) if (offset != POTHOS_ZYNQ_DMA_REGS_OFF && offset == (__b).paddr) \
+        return remap_pfn_range(vma, vma->vm_start, vma->vm_pgoff, size, vma->vm_page_prot);
     for (size_t i = 0; i < user->chan->allocs.num_buffs; i++)
     {
         try_map_buff(user->chan->allocs.buffs[i]);

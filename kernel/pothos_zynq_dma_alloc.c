@@ -6,18 +6,16 @@
 #include <linux/dma-mapping.h>
 #include <linux/platform_device.h>
 
-static pothos_zynq_dma_buff_t pothos_zynq_dma_buff_alloc(struct platform_device *pdev, const size_t size)
+static void pothos_zynq_dma_buff_alloc(struct platform_device *pdev, pothos_zynq_dma_buff_t *buff)
 {
-    pothos_zynq_dma_buff_t buff;
     dma_addr_t phys_addr = 0;
-    void *virt_addr = dma_zalloc_coherent(&pdev->dev, size, &phys_addr, GFP_KERNEL);
-    buff.paddr = phys_addr;
-    buff.kaddr = virt_addr;
-    buff.uaddr = NULL; //filled by user with mmap
-    return buff;
+    void *virt_addr = dma_zalloc_coherent(&pdev->dev, buff->bytes, &phys_addr, GFP_KERNEL);
+    buff->paddr = phys_addr;
+    buff->kaddr = virt_addr;
+    buff->uaddr = NULL; //filled by user with mmap
 }
 
-long pothos_zynq_dma_ioctl_alloc(pothos_zynq_dma_user_t *user, const pothos_zynq_dma_alloc_t *user_config)
+long pothos_zynq_dma_ioctl_alloc(pothos_zynq_dma_user_t *user, pothos_zynq_dma_alloc_t *user_config)
 {
     pothos_zynq_dma_chan_t *chan = user->chan;
     struct platform_device *pdev = user->engine->pdev;
@@ -40,27 +38,25 @@ long pothos_zynq_dma_ioctl_alloc(pothos_zynq_dma_user_t *user, const pothos_zynq
     //allocate dma buffers
     for (size_t i = 0; i < chan->allocs.num_buffs; i++)
     {
-        chan->allocs.buffs[i] = pothos_zynq_dma_buff_alloc(pdev, chan->allocs.buffs[i].bytes);
+        pothos_zynq_dma_buff_alloc(pdev, chan->allocs.buffs+i);
     }
 
     //allocate SG table
-    chan->sgbuff = pothos_zynq_dma_buff_alloc(pdev, sizeof(xilinx_dma_desc_t)*chan->allocs.num_buffs);
+    chan->sgbuff.bytes = sizeof(xilinx_dma_desc_t)*chan->allocs.num_buffs;
+    pothos_zynq_dma_buff_alloc(pdev, &chan->sgbuff);
     chan->sgtable = (xilinx_dma_desc_t *)chan->sgbuff.kaddr;
+
+    //copy the allocation results back to the user ioctl buffer
+    if (copy_to_user(user_config->buffs, chan->allocs.buffs, alloc_args.num_buffs*sizeof(pothos_zynq_dma_buff_t)) != 0) return -EACCES;
+    if (copy_to_user(&user_config->sgbuff, &chan->sgbuff, sizeof(pothos_zynq_dma_buff_t)) != 0) return -EACCES;
 
     return 0;
 }
 
-long pothos_zynq_dma_ioctl_free(pothos_zynq_dma_user_t *user, const pothos_zynq_dma_free_t *user_config)
+long pothos_zynq_dma_ioctl_free(pothos_zynq_dma_user_t *user)
 {
     pothos_zynq_dma_chan_t *chan = user->chan;
     struct platform_device *pdev = user->engine->pdev;
-
-    //copy the buffer into kernel space
-    pothos_zynq_dma_free_t free_args;
-    if (copy_from_user(&free_args, user_config, sizeof(pothos_zynq_dma_free_t)) != 0) return -EACCES;
-
-    //check the sentinel
-    if (free_args.sentinel != POTHOS_ZYNQ_DMA_SENTINEL) return -EINVAL;
 
     //are we already free?
     if (chan->allocs.buffs == NULL) return 0;

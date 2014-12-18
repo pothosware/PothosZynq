@@ -99,10 +99,10 @@ int pothos_zynq_dma_release(struct inode *inode, struct file *filp);
 long pothos_zynq_dma_ioctl_chan(pothos_zynq_dma_user_t *user, const pothos_zynq_dma_setup_t *user_config);
 
 //! Allocate DMA buffers from IOCTL configuration struct
-long pothos_zynq_dma_ioctl_alloc(pothos_zynq_dma_user_t *user, const pothos_zynq_dma_alloc_t *user_config);
+long pothos_zynq_dma_ioctl_alloc(pothos_zynq_dma_user_t *user, pothos_zynq_dma_alloc_t *user_config);
 
 //! Free DMA buffers allocated from buffs alloc
-long pothos_zynq_dma_ioctl_free(pothos_zynq_dma_user_t *user, const pothos_zynq_dma_free_t *user_config);
+long pothos_zynq_dma_ioctl_free(pothos_zynq_dma_user_t *user);
 
 //! Wait on DMA completion from IOCTL configuration struct
 long pothos_zynq_dma_ioctl_wait(pothos_zynq_dma_user_t *user, const pothos_zynq_dma_wait_t *user_config);

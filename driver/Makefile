@@ -11,7 +11,11 @@ LDFLAGS=-static
 
 OBJ = loopback_test.o
 
-%.o: %.c
+DEPS = \
+	pothos_zynq_dma_driver.h \
+	../kernel/pothos_zynq_dma_common.h
+
+%.o: %.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 loopback_test.exe: $(OBJ)
