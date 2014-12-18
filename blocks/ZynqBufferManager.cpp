@@ -22,8 +22,8 @@ public:
     {
         if (this->isInitialized())
         {
-            pzdud_halt(_engine.get(), dir);
-            pzdud_free(_engine.get(), dir);
+            pzdud_halt(_engine.get());
+            pzdud_free(_engine.get());
         }
     }
 
@@ -31,10 +31,10 @@ public:
     {
         _readyBuffs = Pothos::Util::OrderedQueue<Pothos::ManagedBuffer>(args.numBuffers);
 
-        int ret = pzdud_alloc(_engine.get(), dir, args.numBuffers, args.bufferSize);
+        int ret = pzdud_alloc(_engine.get(), args.numBuffers, args.bufferSize);
         if (ret != PZDUD_OK) throw Pothos::Exception("ZynqBufferManager::pzdud_alloc()", std::to_string(ret));
 
-        ret = pzdud_init(_engine.get(), dir, false/*no initial release*/);
+        ret = pzdud_init(_engine.get(), false/*no initial release*/);
         if (ret != PZDUD_OK) throw Pothos::Exception("ZynqBufferManager::pzdud_init()", std::to_string(ret));
 
         //this will flag the manager as initialized after the allocation above
@@ -44,7 +44,7 @@ public:
         for (size_t handle = 0; handle < args.numBuffers; handle++)
         {
             auto container = std::make_shared<int>(0);
-            void *addr = pzdud_addr(_engine.get(), dir, handle);
+            void *addr = pzdud_addr(_engine.get(), handle);
             auto sharedBuff = Pothos::SharedBuffer(size_t(addr), args.bufferSize, container);
             Pothos::ManagedBuffer buffer;
             buffer.reset(this->shared_from_this(), sharedBuff, handle);
@@ -71,7 +71,7 @@ public:
         //this manager in an output port upstream of dma sink
         if (dir == PZDUD_MM2S)
         {
-            pzdud_release(_engine.get(), dir, buff.getSlabIndex(), numBytes);
+            pzdud_release(_engine.get(), buff.getSlabIndex(), numBytes);
         }
     }
 
@@ -87,7 +87,7 @@ public:
         //this manager in the output port on the dma source
         if (dir == PZDUD_S2MM)
         {
-            pzdud_release(_engine.get(), dir, buff.getSlabIndex(), 0/*unused*/);
+            pzdud_release(_engine.get(), buff.getSlabIndex(), 0/*unused*/);
         }
     }
 

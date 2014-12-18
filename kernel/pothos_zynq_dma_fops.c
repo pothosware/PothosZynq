@@ -100,6 +100,7 @@ int pothos_zynq_dma_open(struct inode *inode, struct file *filp)
 int pothos_zynq_dma_release(struct inode *inode, struct file *filp)
 {
     pothos_zynq_dma_user_t *user = (pothos_zynq_dma_user_t *)filp->private_data;
+    pothos_zynq_dma_ioctl_free(user);
     kfree(user);
     return 0;
 }

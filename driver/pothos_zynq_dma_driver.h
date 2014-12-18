@@ -240,7 +240,7 @@ static inline pzdud_t *pzdud_create(const size_t engine_no, const pzdud_dir_t di
     self->engine_no = engine_no;
     self->direction = direction;
 
-    if (direction == PZDUD_MM2S)
+    if (direction == PZDUD_S2MM)
     {
         self->ctrl_reg = ((char *)regs) + XILINX_DMA_S2MM_DMACR_OFFSET;
         self->stat_reg = ((char *)regs) + XILINX_DMA_S2MM_DMASR_OFFSET;
@@ -248,21 +248,12 @@ static inline pzdud_t *pzdud_create(const size_t engine_no, const pzdud_dir_t di
         self->tail_reg = ((char *)regs) + XILINX_DMA_S2MM_TAILDESC_OFFSET;
     }
 
-    if (direction == PZDUD_S2MM)
+    if (direction == PZDUD_MM2S)
     {
         self->ctrl_reg = ((char *)regs) + XILINX_DMA_MM2S_DMACR_OFFSET;
         self->stat_reg = ((char *)regs) + XILINX_DMA_MM2S_DMASR_OFFSET;
         self->head_reg = ((char *)regs) + XILINX_DMA_MM2S_CURDESC_OFFSET;
         self->tail_reg = ((char *)regs) + XILINX_DMA_MM2S_TAILDESC_OFFSET;
-    }
-
-    //perform a soft reset and wait for done
-    int loop = 0;
-    __pzdud_write32(self->ctrl_reg, __pzdud_read32(self->ctrl_reg) | XILINX_DMA_CR_RESET_MASK);
-    loop = XILINX_DMA_RESET_LOOP;
-    while ((__pzdud_read32(self->ctrl_reg) & XILINX_DMA_CR_RESET_MASK) != 0)
-    {
-        if (--loop == 0) return NULL;
     }
 
     return self;
@@ -279,28 +270,17 @@ static inline int pzdud_destroy(pzdud_t *self)
 /***********************************************************************
  * reset implementation
  **********************************************************************/
-    /*
-static inline int __pzdud_reset(pzdud_chan_t *chan)
+static inline int pzdud_reset(pzdud_t *self)
 {
-    int loop = 0;
-
     //perform a soft reset and wait for done
     __pzdud_write32(self->ctrl_reg, __pzdud_read32(self->ctrl_reg) | XILINX_DMA_CR_RESET_MASK);
-    loop = XILINX_DMA_RESET_LOOP;
+    int loop = XILINX_DMA_RESET_LOOP;
     while ((__pzdud_read32(self->ctrl_reg) & XILINX_DMA_CR_RESET_MASK) != 0)
     {
         if (--loop == 0) return PZDUD_ERROR_TIMEOUT;
     }
+
     return PZDUD_OK;
-}
-*/
-
-static inline int pzdud_reset(pzdud_t *self)
-{
-    int ret = PZDUD_OK;
-
-
-    return ret;
 }
 
 /***********************************************************************

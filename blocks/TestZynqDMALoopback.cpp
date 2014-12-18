@@ -7,7 +7,7 @@
 #include <Poco/JSON/Object.h>
 #include <iostream>
 
-POTHOS_TEST_BLOCK("/fpga/tests", test_zynq_dma_loopback)
+POTHOS_TEST_BLOCK("/zynq/tests", test_zynq_dma_loopback)
 {
     auto env = Pothos::ProxyEnvironment::make("managed");
     auto registry = env->findProxy("Pothos/BlockRegistry");

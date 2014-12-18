@@ -14,11 +14,11 @@
 //! Change this when the structure changes
 #define POTHOS_ZYNQ_DMA_SENTINEL 0xab0d1d87
 
-//! Constant for memory map to stream
-#define POTHOS_ZYNQ_DMA_MM2S 0
-
 //! Constant for stream to memory map
-#define POTHOS_ZYNQ_DMA_S2MM 1
+#define POTHOS_ZYNQ_DMA_S2MM 0
+
+//! Constant for memory map to stream
+#define POTHOS_ZYNQ_DMA_MM2S 1
 
 /*!
  * A descriptor for a single DMA buffer.
