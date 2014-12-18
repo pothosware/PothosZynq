@@ -27,7 +27,7 @@ public:
     }
 
     ZyncDMASource(const size_t index):
-        _engine(std::shared_ptr<pzdud_t>(pzdud_create(index), &pzdud_destroy))
+        _engine(std::shared_ptr<pzdud_t>(pzdud_create(index, PZDUD_S2MM), &pzdud_destroy))
     {
         if (not _engine) throw Pothos::Exception("ZyncDMASource::pzdud_create()");
         this->setupOutput(0, "", "ZyncDMASource"+std::to_string(index));
@@ -51,7 +51,7 @@ public:
 
         //wait for completion on the head buffer
         const long timeout_us = this->workInfo().maxTimeoutNs/1000;
-        const int ret = pzdud_wait(_engine.get(), PZDUD_S2MM, timeout_us);
+        const int ret = pzdud_wait(_engine.get(), timeout_us);
         if (ret == PZDUD_ERROR_TIMEOUT)
         {
             //got a timeout, yield so we can get called again
@@ -66,7 +66,7 @@ public:
 
         //acquire the head buffer and release its handle
         size_t length = 0;
-        const int handle = pzdud_acquire(_engine.get(), PZDUD_S2MM, &length);
+        const int handle = pzdud_acquire(_engine.get(), &length);
         if (handle < 0) throw Pothos::Exception("ZyncDMASource::pzdud_acquire()", std::to_string(handle));
         if (size_t(handle) != outPort->buffer().getManagedBuffer().getSlabIndex())
         {

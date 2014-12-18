@@ -3,28 +3,25 @@
 
 #include "pothos_zynq_dma_module.h"
 #include <linux/uaccess.h> //copy_to/from_user
-#include <linux/interrupt.h> //irq registration
 #include <linux/wait.h> //wait_queue_head_t
 #include <linux/sched.h> //interruptible
 #include <linux/io.h> //iowrite32
-#include <linux/platform_device.h>
 
-static irqreturn_t pothos_zynq_dma_irq_handler(int irq, void *data_)
+irqreturn_t pothos_zynq_dma_irq_handler(int irq, void *data)
 {
-    pothos_zynq_dma_device_t *data = (pothos_zynq_dma_device_t *)data_;
-    data->irq_count++;
+    pothos_zynq_dma_chan_t *chan = (pothos_zynq_dma_chan_t *)data;
+    chan->irq_count++;
 
-    //ack the interrupts from both channels regardless of which IRQ caused this interrupt
-    iowrite32(XILINX_DMA_XR_IRQ_ALL_MASK, ((char *)data->regs_virt_addr) + XILINX_DMA_S2MM_DMASR_OFFSET);
-    iowrite32(XILINX_DMA_XR_IRQ_ALL_MASK, ((char *)data->regs_virt_addr) + XILINX_DMA_MM2S_DMASR_OFFSET);
+    //ack the interrupts
+    iowrite32(XILINX_DMA_XR_IRQ_ALL_MASK, chan->register_stat);
 
     //wake up any contexts which are blocking on the wait queue
-    wake_up_interruptible(&data->irq_wait);
+    wake_up_interruptible(&chan->irq_wait);
 
     return IRQ_HANDLED;
 }
 
-long pothos_zynq_dma_wait(pothos_zynq_dma_device_t *data, const pothos_zynq_dma_wait_t *user_config, pothos_zynq_dma_alloc_t *allocs)
+long pothos_zynq_dma_ioctl_wait(pothos_zynq_dma_user_t *user, const pothos_zynq_dma_wait_t *user_config)
 {
     //convert the args into kernel memory
     pothos_zynq_dma_wait_t wait_args;
@@ -33,27 +30,20 @@ long pothos_zynq_dma_wait(pothos_zynq_dma_device_t *data, const pothos_zynq_dma_
     //check the sentinel
     if (wait_args.sentinel != POTHOS_ZYNQ_DMA_SENTINEL) return -EINVAL;
 
-    //check that the index is in range
-    if ((wait_args.index + 1) >= allocs->num_buffs) return -EINVAL;
+    //check that interrupts are configured
+    if (user->chan->irq_number == 0 || user->chan->irq_registered != 0) return -ENODEV;
+
+    //check that the SG index is in range
+    if (wait_args.sgindex >= user->chan->allocs.num_buffs) return -ECHRNG;
+
+    //check that the SG table is set
+    if (user->chan->sgtable == NULL) return -EADDRNOTAVAIL;
 
     //offset to the scatter/gather entry (last buff is sg)
-    pothos_zynq_dma_buff_t *sgbuff = allocs->buffs + allocs->num_buffs - 1;
-    xilinx_dma_desc_t *desc = ((xilinx_dma_desc_t *)sgbuff->kaddr) + wait_args.index;
+    xilinx_dma_desc_t *desc = user->chan->sgtable + wait_args.sgindex;
 
     //wait on the condition
     const unsigned long timeout = usecs_to_jiffies(wait_args.timeout_us);
-    wait_event_interruptible_timeout(data->irq_wait, ((desc->status & (1 << 31)) != 0), timeout);
+    wait_event_interruptible_timeout(user->chan->irq_wait, ((desc->status & (1 << 31)) != 0), timeout);
     return 0;
-}
-
-int pothos_zynq_dma_register_irq(unsigned int irq, pothos_zynq_dma_device_t *data)
-{
-    struct platform_device *pdev = data->pdev;
-    return devm_request_irq(&pdev->dev, irq, pothos_zynq_dma_irq_handler, IRQF_SHARED, "xilinx-dma-controller", data);
-}
-
-void pothos_zynq_dma_unregister_irq(unsigned int irq, pothos_zynq_dma_device_t *data)
-{
-    struct platform_device *pdev = data->pdev;
-    return devm_free_irq(&pdev->dev, irq, data);
 }
