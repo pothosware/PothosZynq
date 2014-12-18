@@ -12,7 +12,13 @@
 #define POTHOS_ZYNQ_DMA_REGS_SIZE 1024
 
 //! Change this when the structure changes
-#define POTHOS_ZYNQ_DMA_SENTINEL 0x1d87ab0d
+#define POTHOS_ZYNQ_DMA_SENTINEL 0xab0d1d87
+
+//! Constant for memory map to stream
+#define POTHOS_ZYNQ_DMA_MM2S 0
+
+//! Constant for stream to memory map
+#define POTHOS_ZYNQ_DMA_S2MM 1
 
 /*!
  * A descriptor for a single DMA buffer.
@@ -33,10 +39,34 @@ typedef struct
 typedef struct
 {
     unsigned int sentinel; //!< A expected word for ABI compatibility checks
+    size_t engine_no; //!< Engine number specifies the DMA engine number
+    size_t direction; //!< Channel direction specifies MM2S or S2MM
+} pothos_zynq_dma_setup_t;
+
+/*!
+ * The IOCTL structured used to request allocations.
+ * The addresses will be filled in on successful allocations with ioctl.
+ * The user must call mmap with paddr as the offset to fill in the uaddr.
+ */
+typedef struct
+{
+    unsigned int sentinel; //!< A expected word for ABI compatibility checks
+    size_t chan_index; //!< Channel index specifies the DMA engine number
+    size_t chan_dir; //!< Channel directions specifies MM2S or S2MM
     size_t num_buffs; //!< The number of DMA buffers
     pothos_zynq_dma_buff_t *buffs; //!< An array of DMA buffers
-
+    pothos_zynq_dma_buff_t sgbuff; //!< The buffer for the SG table
 } pothos_zynq_dma_alloc_t;
+
+/*!
+ * The IOCTL structured used to free allocations.
+ */
+typedef struct
+{
+    unsigned int sentinel; //!< A expected word for ABI compatibility checks
+    size_t chan_index; //!< Channel index specifies the DMA engine number
+    size_t chan_dir; //!< Channel directions specifies MM2S or S2MM
+} pothos_zynq_dma_free_t;
 
 /*!
  * The IOCTL structured used for wait completions (direction-independent).
@@ -45,33 +75,22 @@ typedef struct
 typedef struct
 {
     unsigned int sentinel; //!< A expected word for ABI compatibility checks
-    size_t index; //!< The index into the scatter/gather table to check
+    size_t sgindex; //!< The index into the scatter/gather table to check
     long timeout_us; //!< the timeout to wait for completion in microseconds
 } pothos_zynq_dma_wait_t;
 
-/*!
- * Used to allocate stream to memory map buffers specified by the pothos_zynq_dma_ioctl_t
- * A second call will fail unless the user first performs POTHOS_ZYNQ_DMA_FREE_S2MM.
- */
-#define POTHOS_ZYNQ_DMA_ALLOC_S2MM _IOWR('p', 1, pothos_zynq_dma_alloc_t *)
 
-/*!
- * Used to allocate memory map to stream buffers specified by the pothos_zynq_dma_ioctl_t
- * A second call will fail unless the user first performs POTHOS_ZYNQ_DMA_FREE_MM2S.
- */
-#define POTHOS_ZYNQ_DMA_ALLOC_MM2S _IOWR('p', 2, pothos_zynq_dma_alloc_t *)
+//! Setup the DMA channel for the open file descriptor
+#define POTHOS_ZYNQ_DMA_SETUP _IOWR('p', 1, pothos_zynq_dma_setup_t *)
 
-//! Free all allocations performed by POTHOS_ZYNQ_DMA_ALLOC_S2MM
-#define POTHOS_ZYNQ_DMA_FREE_S2MM _IO('p', 3)
+//! Allocate DMA buffers and the scatter/gather table
+#define POTHOS_ZYNQ_DMA_ALLOC _IOWR('p', 2, pothos_zynq_dma_alloc_t *)
 
-//! Free all allocations performed by POTHOS_ZYNQ_DMA_ALLOC_MM2S
-#define POTHOS_ZYNQ_DMA_FREE_MM2S _IO('p', 4)
+//! Free all allocations performed by POTHOS_ZYNQ_DMA_ALLOC
+#define POTHOS_ZYNQ_DMA_FREE _IOW('p', 3, pothos_zynq_dma_free_t *)
 
-//! Wait with a timeout for the stream to memory map desc to complete
-#define POTHOS_ZYNQ_DMA_WAIT_S2MM _IOW('p', 5, pothos_zynq_dma_wait_t *)
-
-//! Wait with a timeout for the memory map to stream desc to complete
-#define POTHOS_ZYNQ_DMA_WAIT_MM2S _IOW('p', 6, pothos_zynq_dma_wait_t *)
+//! Wait with a timeout for a scatter/gather entry to complete
+#define POTHOS_ZYNQ_DMA_WAIT _IOW('p', 4, pothos_zynq_dma_wait_t *)
 
 /***********************************************************************
  * Register constants for AXI DMA v7.1

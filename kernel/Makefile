@@ -10,9 +10,9 @@ endif
 ########################################################################
 POTHOS_AXIS_DMA_SOURCES = \
 	pothos_zynq_dma_irq.c \
-	pothos_zynq_dma_probe.c \
+	pothos_zynq_dma_fops.c \
 	pothos_zynq_dma_alloc.c \
-	pothos_zynq_dma_fops.c
+	pothos_zynq_dma_module.c
 
 pothos_zynq_dma-objs = $(POTHOS_AXIS_DMA_SOURCES:.c=.o)
 
