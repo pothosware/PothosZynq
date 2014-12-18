@@ -40,6 +40,7 @@ static void pothos_zynq_dma_chan_clear(pothos_zynq_dma_chan_t *chan)
     init_waitqueue_head(&chan->irq_wait);
     chan->irq_count = 0;
     chan->irq_registered = 0;
+    chan->claimed = 0;
 }
 
 /***********************************************************************

@@ -26,6 +26,14 @@ long pothos_zynq_dma_ioctl_chan(pothos_zynq_dma_user_t *user, const pothos_zynq_
     else if (setup_args.direction == POTHOS_ZYNQ_DMA_S2MM) user->chan = &user->engine->s2mm_chan;
     else return -EINVAL;
 
+    //check the claimed status
+    if (user->chan->claimed)
+    {
+        user->chan = NULL;
+        return -EBUSY;
+    }
+    user->chan->claimed = 1;
+
     return 0;
 }
 
@@ -100,7 +108,11 @@ int pothos_zynq_dma_open(struct inode *inode, struct file *filp)
 int pothos_zynq_dma_release(struct inode *inode, struct file *filp)
 {
     pothos_zynq_dma_user_t *user = (pothos_zynq_dma_user_t *)filp->private_data;
-    pothos_zynq_dma_ioctl_free(user);
+    if (user->chan != NULL)
+    {
+        pothos_zynq_dma_ioctl_free(user);
+        user->chan->claimed = 0;
+    }
     kfree(user);
     return 0;
 }

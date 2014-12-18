@@ -33,6 +33,9 @@ typedef struct
     unsigned long long irq_count;
     int irq_registered;
 
+    //claim flag for safety
+    int claimed;
+
 } pothos_zynq_dma_chan_t;
 
 /*!
