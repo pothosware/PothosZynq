@@ -62,7 +62,7 @@ static void pothos_zynq_dma_chan_unregister_irq(struct platform_device *pdev, po
 /***********************************************************************
  * Per-engine initializer
  **********************************************************************/
-static void pothos_zynq_dma_engine_init(pothos_zynq_dma_engine_t *engine, struct platform_device *pdev)
+static int pothos_zynq_dma_engine_init(pothos_zynq_dma_engine_t *engine, struct platform_device *pdev)
 {
     struct device_node *node = pdev->dev.of_node;
 
@@ -72,13 +72,25 @@ static void pothos_zynq_dma_engine_init(pothos_zynq_dma_engine_t *engine, struct
     engine->regs_phys_size = 0;
     engine->regs_virt_addr = NULL;
 
-    //extract the register space and map it
+    //extract the register space
     struct resource *res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-    if (res == NULL) return;
+    if (res == NULL)
+    {
+        dev_err(&pdev->dev, "Error getting regs resource from devicetree.'\n");
+        dev_err(&pdev->dev, "Example 'reg = <0x40400000 0x10000>;'\n");
+        return -1;
+    }
+    dev_info(&pdev->dev, "Registers at 0x%x\n", engine->regs_phys_addr);
+
+    //map the register space
     engine->regs_phys_addr = res->start;
     engine->regs_phys_size = resource_size(res)/2; //we choose to map lower half
     engine->regs_virt_addr = ioremap_nocache(engine->regs_phys_addr, engine->regs_phys_size);
-    dev_info(&pdev->dev, "Registers at 0x%x\n", engine->regs_phys_addr);
+    if (engine->regs_virt_addr == NULL)
+    {
+        dev_info(&pdev->dev, "Error mapping register resource\n");
+        return -1;
+    }
 
     //clear the channels
     pothos_zynq_dma_chan_clear(&engine->mm2s_chan);
@@ -95,10 +107,18 @@ static void pothos_zynq_dma_engine_init(pothos_zynq_dma_engine_t *engine, struct
     dev_info(&pdev->dev, "MM2S IRQ = %d\n", engine->mm2s_chan.irq_number);
     engine->s2mm_chan.irq_number = irq_of_parse_and_map(node, 1);
     dev_info(&pdev->dev, "S2MM IRQ = %d\n", engine->s2mm_chan.irq_number);
+    if (engine->mm2s_chan.irq_number == 0 || engine->s2mm_chan.irq_number == 0)
+    {
+        dev_err(&pdev->dev, "Error getting IRQ resources from devicetree.\n");
+        dev_err(&pdev->dev, "Example 'interrupts = <0 30 4>, <0 29 4>;'\n");
+        return -1;
+    }
 
     //register interrupt handlers
     pothos_zynq_dma_chan_register_irq(pdev, &engine->mm2s_chan);
     pothos_zynq_dma_chan_register_irq(pdev, &engine->s2mm_chan);
+
+    return 0;
 }
 
 /***********************************************************************
@@ -109,11 +129,10 @@ static void pothos_zynq_dma_engine_exit(pothos_zynq_dma_engine_t *engine)
     struct platform_device *pdev = engine->pdev;
 
     //unregister interrupt handles
+    dev_info(&pdev->dev, "MM2S IRQ total = %llu\n", engine->mm2s_chan.irq_count);
+    dev_info(&pdev->dev, "S2MM IRQ total = %llu\n", engine->s2mm_chan.irq_count);
     pothos_zynq_dma_chan_unregister_irq(pdev, &engine->mm2s_chan);
     pothos_zynq_dma_chan_unregister_irq(pdev, &engine->s2mm_chan);
-
-    //free buffers if need-be
-    //TODO
 
     //unmap registers
     if (engine->regs_virt_addr != NULL) iounmap(engine->regs_virt_addr);
@@ -136,7 +155,7 @@ static int pothos_zynq_dma_module_init(void)
         if (pdev == NULL) continue;
         module_data.num_engines++;
         module_data.engines = krealloc(module_data.engines, sizeof(pothos_zynq_dma_engine_t)*module_data.num_engines, GFP_KERNEL);
-        pothos_zynq_dma_engine_init(module_data.engines+module_data.num_engines-1, pdev);
+        if (pothos_zynq_dma_engine_init(module_data.engines+module_data.num_engines-1, pdev) != 0) return -1;
     }
 
     //register the character device
