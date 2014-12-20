@@ -141,6 +141,28 @@ static inline int pzdud_acquire(pzdud_t *self, size_t *length);
  */
 static inline void pzdud_release(pzdud_t *self, size_t handle, size_t length);
 
+/*!
+ * Write a user application field to the SG table.
+ * These values will be output in the control stream.
+ * This call only applies to the MM2S direction.
+ * \param self the user dma instance structure
+ * \param handle the handle for a specific SG entry
+ * \param which which application field 0 to 4
+ * \param value the value for the user field
+ */
+static inline void pzdud_set_app_field(pzdud_t *self, size_t handle, size_t which, const uint32_t value);
+
+/*!
+ * Read a user application field from the SG table.
+ * These values will be input from the status stream.
+ * This call only applies to the S2MM direction.
+ * \param self the user dma instance structure
+ * \param handle the handle for a specific SG entry
+ * \param which which application field 0 to 4
+ * \return the value for the user field
+ */
+static inline uint32_t pzdud_get_app_field(pzdud_t *self, size_t handle, size_t which);
+
 /***********************************************************************
  * implementation
  **********************************************************************/
@@ -509,4 +531,19 @@ static inline void pzdud_release(pzdud_t *self, size_t handle, size_t length)
         self->tail_index = (self->tail_index + 1) % self->num_buffs;
     }
     while (__sync_sub_and_fetch(&self->num_acquired, 1) != 0);
+}
+
+/***********************************************************************
+ * user field access
+ **********************************************************************/
+static inline void pzdud_set_app_field(pzdud_t *self, size_t handle, size_t which, const uint32_t value)
+{
+    uint32_t *addr = &(self->sgtable[handle].app_0);
+    *(addr + which) = value;
+}
+
+static inline uint32_t pzdud_get_app_field(pzdud_t *self, size_t handle, size_t which)
+{
+    const uint32_t *addr = &(self->sgtable[handle].app_0);
+    return *(addr + which);
 }
