@@ -80,7 +80,7 @@ static int pothos_zynq_dma_engine_init(pothos_zynq_dma_engine_t *engine, struct 
         dev_err(&pdev->dev, "Example 'reg = <0x40400000 0x10000>;'\n");
         return -1;
     }
-    dev_info(&pdev->dev, "Registers at 0x%x\n", engine->regs_phys_addr);
+    dev_info(&pdev->dev, "Registers at 0x%x\n", res->start);
 
     //map the register space
     engine->regs_phys_addr = res->start;
