@@ -28,3 +28,12 @@ POTHOS_MODULE_UTIL(
     DESTINATION blocks/zynq
     ENABLE_DOCS
 )
+
+########################################################################
+## Install driver header files
+########################################################################
+install(FILES
+    ${PROJECT_SOURCE_DIR}/driver/pothos_zynq_dma_driver.h
+    ${PROJECT_SOURCE_DIR}/kernel/pothos_zynq_dma_common.h
+    DESTINATION include
+)
