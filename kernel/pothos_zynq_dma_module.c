@@ -62,12 +62,12 @@ static void pothos_zynq_dma_chan_unregister_irq(struct platform_device *pdev, po
 /***********************************************************************
  * Per-engine initializer
  **********************************************************************/
-static int pothos_zynq_dma_engine_init(pothos_zynq_dma_engine_t *engine, struct platform_device *pdev)
+static int pothos_zynq_dma_engine_init(pothos_zynq_dma_engine_t *engine)
 {
+    struct platform_device *pdev = engine->pdev;
     struct device_node *node = pdev->dev.of_node;
 
     //init engine data structures
-    engine->pdev = pdev;
     engine->regs_phys_addr = 0;
     engine->regs_phys_size = 0;
     engine->regs_virt_addr = NULL;
@@ -155,7 +155,13 @@ static int pothos_zynq_dma_module_init(void)
         if (pdev == NULL) continue;
         module_data.num_engines++;
         module_data.engines = krealloc(module_data.engines, sizeof(pothos_zynq_dma_engine_t)*module_data.num_engines, GFP_KERNEL);
-        if (pothos_zynq_dma_engine_init(module_data.engines+module_data.num_engines-1, pdev) != 0) return -1;
+        module_data.engines[module_data.num_engines-1].pdev = pdev;
+    }
+
+    //initialize each platform device
+    for (size_t i = 0; i < module_data.num_engines; i++)
+    {
+        if (pothos_zynq_dma_engine_init(module_data.engines+i) != 0) return -1;
     }
 
     //register the character device
