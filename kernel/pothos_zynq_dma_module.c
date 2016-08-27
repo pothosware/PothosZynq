@@ -129,8 +129,8 @@ static void pothos_zynq_dma_engine_exit(pothos_zynq_dma_engine_t *engine)
     struct platform_device *pdev = engine->pdev;
 
     //unregister interrupt handles
-    dev_info(&pdev->dev, "MM2S IRQ total = %llu\n", engine->mm2s_chan.irq_count);
-    dev_info(&pdev->dev, "S2MM IRQ total = %llu\n", engine->s2mm_chan.irq_count);
+    dev_info(&pdev->dev, "MM2S IRQ[%d] total = %llu\n", engine->mm2s_chan.irq_number, engine->mm2s_chan.irq_count);
+    dev_info(&pdev->dev, "S2MM IRQ[%d] total = %llu\n", engine->s2mm_chan.irq_number, engine->s2mm_chan.irq_count);
     pothos_zynq_dma_chan_unregister_irq(pdev, &engine->mm2s_chan);
     pothos_zynq_dma_chan_unregister_irq(pdev, &engine->s2mm_chan);
 
