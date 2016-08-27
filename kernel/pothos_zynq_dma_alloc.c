@@ -47,7 +47,7 @@ long pothos_zynq_dma_ioctl_alloc(pothos_zynq_dma_user_t *user, pothos_zynq_dma_a
     chan->sgtable = (xilinx_dma_desc_t *)chan->sgbuff.kaddr;
 
     //copy the allocation results back to the user ioctl buffer
-    if (copy_to_user(user_config->buffs, chan->allocs.buffs, alloc_args.num_buffs*sizeof(pothos_zynq_dma_buff_t)) != 0) return -EACCES;
+    if (copy_to_user(alloc_args.buffs, chan->allocs.buffs, alloc_args.num_buffs*sizeof(pothos_zynq_dma_buff_t)) != 0) return -EACCES;
     if (copy_to_user(&user_config->sgbuff, &chan->sgbuff, sizeof(pothos_zynq_dma_buff_t)) != 0) return -EACCES;
 
     return 0;
