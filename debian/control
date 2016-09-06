@@ -1,0 +1,8 @@
+Package: pothos-zynq
+Architecture: all
+Maintainer: Josh Blum
+Depends: debconf (>= 0.5.00)
+Priority: optional
+Version: 0.1.0
+Description: Pothos Zynq - AXI DMA on Zynq
+ AXI DMA userspace library and kernel support.

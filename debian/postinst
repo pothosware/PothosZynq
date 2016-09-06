@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = "configure" ]; then
+	/sbin/depmod
+	/sbin/modprobe pothos_zynq_dma
+fi
+
+#DEBHELPER#
