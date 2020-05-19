@@ -9,6 +9,9 @@
 static void pothos_zynq_dma_buff_alloc(struct platform_device *pdev, pothos_zynq_dma_buff_t *buff)
 {
     dma_addr_t phys_addr = 0;
+    int rc = dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(32));
+    if (rc)
+        dev_err(&pdev->dev, "Error dma_set_coherent_mask() = %d.\n", rc);
     void *virt_addr = dma_zalloc_coherent(&pdev->dev, buff->bytes, &phys_addr, GFP_KERNEL);
     buff->paddr = phys_addr;
     buff->kaddr = virt_addr;
